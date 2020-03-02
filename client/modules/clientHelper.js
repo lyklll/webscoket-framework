@@ -15,7 +15,7 @@ function webSocketInit(service) {
             "loginName": "admin",
             "loginPwd": "123"
         })
-        console.log("连接成功")
+        console.log("成功链接服务器")
         handlesAfterOpen.forEach(x => {
             x(ws)
         })
