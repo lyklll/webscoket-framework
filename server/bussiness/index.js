@@ -1,0 +1,65 @@
+var fs = require('fs');
+
+let allHandle = {}
+
+
+
+//读取本路径下的js，并加载
+let files = fs.readdirSync(__dirname)
+files.forEach(x => {
+    if (x != "index.js" && x.indexOf('.js') >= 0) {
+        var tmp = require(`./${x}`)
+        let fileName = x.split('.')[0]
+        allHandle[fileName] = tmp
+    }
+})
+
+let result = {}
+
+result.error = (conn, errMessage) => {
+    let err = {
+        issuccess: false,
+        data: errMessage
+    }
+    conn.send(JSON.stringify(err))
+
+}
+result.success = (conn, data) => {
+    let handleResult = {
+        issuccess: true,
+        data: data
+    }
+    conn.send(JSON.stringify(handleResult))
+}
+
+result.exec = (conn, options) => {
+    let part = null
+    try {
+        part = JSON.parse(options)
+    } catch {
+        result.error(conn, "无效的格式")
+        return
+    }
+    if (!conn.sysTag && part.key != 'auth.login') {
+        result.error(conn, "没有访问权限")
+        return
+    }
+
+    try {
+        let paths = part.key.split(".")
+        let tmp = allHandle
+        paths.forEach(x => {
+            tmp = tmp[x]
+            if (!tmp) {
+                result.error(conn, "当前key无效")
+                return
+            }
+        })
+        let handleResult = tmp(conn, part.options)
+        result.success(conn, handleResult)
+    } catch (ex) {
+        result.error(conn, ex.message)
+    }
+}
+
+module.exports = result;
