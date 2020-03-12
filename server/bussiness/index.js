@@ -16,9 +16,10 @@ files.forEach(x => {
 
 let result = {}
 
-result.error = (conn, errMessage) => {
+result.error = (conn, errMessage, backToken) => {
     let err = {
         issuccess: false,
+        backToken: backToken,
         data: errMessage
     }
     conn.send(JSON.stringify(err))
@@ -27,12 +28,14 @@ result.error = (conn, errMessage) => {
 result.success = (conn, data) => {
     let handleResult = {
         issuccess: true,
+        backToken: data.backToken,
         data: data
     }
     conn.send(JSON.stringify(handleResult))
 }
 
 result.exec = (conn, options) => {
+
     let part = null
     try {
         part = JSON.parse(options)
@@ -41,24 +44,30 @@ result.exec = (conn, options) => {
         return
     }
     if (!conn.sysTag && part.key != 'auth.login') {
-        result.error(conn, "没有访问权限")
+        result.error(conn, "没有访问权限", part.requestToken)
         return
     }
 
     try {
         let paths = part.key.split(".")
         let tmp = allHandle
-        paths.forEach(x => {
-            tmp = tmp[x]
-            if (!tmp) {
-                result.error(conn, "当前key无效")
+        for (let i = 0; i < paths.length; i++) {
+            let path = paths[i]
+            if (tmp[path]) {
+                tmp = tmp[path]
+            } else {
+                result.error(conn, "当前key无效", part.requestToken)
                 return
             }
-        })
+        }
         let handleResult = tmp(conn, part.options)
+        if (part.requestToken) {
+            handleResult.backToken = part.requestToken
+        }
         result.success(conn, handleResult)
     } catch (ex) {
-        result.error(conn, ex.message)
+
+        result.error(conn, ex.message, part.requestToken)
     }
 }
 

@@ -10,8 +10,9 @@ currInst.options = {
 //定时器的执行方法
 
 currInst.exec = function(wsConnection) {
-    console.log(`执行了，本次执行的时间是：${new Date()}`)
-    wsConnection.sendData("ffff.sss", {})
+    wsConnection.sendData("ffff.sss", {}, (msg) => {
+        console.log(`执行了，本次执行的时间是：${new Date()},消息是：${msg}`)
+    })
 }
 
 

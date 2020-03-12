@@ -10,7 +10,7 @@ const createServer = () => {
             console.log('开启连接', code)
         })
         connection.on('close', function(code) {
-            console.log('关闭连接', code)
+            console.log('关闭连接', connection.sysTag)
         })
         connection.on('error', function(code) {
             console.log('异常关闭', code)
